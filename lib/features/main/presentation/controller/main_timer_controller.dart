@@ -6,8 +6,6 @@ final mainTimerProvider = StateNotifierProvider<MainTimerState, int>(
   (ref) {
     final mainTimerState = MainTimerState();
 
-    // mainTimerState.resetTimer();
-
     return mainTimerState;
   },
   name: 'mainTimerProvider',
@@ -17,45 +15,32 @@ class MainTimerState extends StateNotifier<int> {
   MainTimerState() : super(0);
 
   StreamSubscription<int>? streamSubscription;
-  // late Timer timer;
-  // bool isRunning = false;
-  // int seconds = 0;
+  bool _running = false;
 
   void startTimer() {
-    // isRunning = true;
-    // timer = Timer.periodic(
-    //   const Duration(seconds: 1),
-    //   (timer) {
-    //     seconds++;
-    //   },
-    // );
-
-    /// origin
-    streamSubscription = Stream<int>.periodic(
-      const Duration(seconds: 1),
-      (x) => x + 1,
-    ).take(maxTimerCountSecond).listen((event) => state = event);
+    if (!_running) {
+      _running = true;
+      streamSubscription = Stream<int>.periodic(
+        const Duration(seconds: 1),
+        (x) => x + 1,
+      ).take(maxTimerCountSecond).listen((event) => state = event);
+    }
   }
 
   void stopTimer() {
-    print('======== stop timer =========');
     streamSubscription?.cancel();
-
-    // isRunning = false;
-    // timer.cancel();
   }
 
   void resetTimer() {
-    print('======== reset timer =========');
-
-    /// origin
     streamSubscription?.cancel();
     state = 0;
+    _running = false;
   }
 
   @override
   void dispose() {
     streamSubscription?.cancel();
+    _running = false;
     super.dispose();
   }
 }

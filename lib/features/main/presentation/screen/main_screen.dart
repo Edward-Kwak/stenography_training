@@ -1,12 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stenography_training/features/main/presentation/controller/main_screen_size_controller.dart';
+import 'package:stenography_training/features/main/presentation/controller/main_side_bar_controller.dart';
 import 'package:stenography_training/features/main/presentation/controller/main_timer_controller.dart';
 import 'package:stenography_training/resources/resources.dart';
+import 'package:stenography_training/utils/size/get_widget_offset.dart';
 import 'package:stenography_training/widgets/dropdown/focus_dropdown_button.dart';
-import 'package:stenography_training/widgets/input_field/common_text_field.dart';
 import 'package:stenography_training/widgets/space/hspace.dart';
 import 'package:stenography_training/widgets/space/wspace.dart';
 import 'package:stenography_training/widgets/text/label_text.dart';
@@ -23,9 +22,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   final focus = FocusNode();
   bool prevFocus = false;
   double fontSize = 12;
-  late Timer _timer;
-  int _time = 0;
-  bool _isRunning = false;
+  double textInputFieldWidth = 800;
+  double textInputFieldHeight = 600;
 
   @override
   void initState() {
@@ -37,62 +35,34 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       }
     });
 
-    _startTimer();
-    _pauseTimer();
-
     textEditingController = TextEditingController();
-    textEditingController.addListener(() {
-      Future.microtask(() {
-        if (textEditingController.text.isEmpty) {
-          _resetTimer();
-        } else {
-          if (!_isRunning) {
-            _startTimer();
-          }
-        }
-      });
-    });
   }
 
   @override
   void dispose() {
     focus.dispose();
     textEditingController.dispose();
-    _timer.cancel();
     super.dispose();
-  }
-
-  _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _time++;
-        _isRunning = true;
-      });
-    });
-  }
-
-  _pauseTimer() {
-    _timer.cancel();
-  }
-
-  _resetTimer() {
-    setState(() {
-      _isRunning = false;
-      _timer.cancel();
-      _time = 0;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final screenSize = ref.watch(mainScreenSizeProvider);
+    final isExpanded = ref.watch(mainSideBarProvider);
+
+    if (screenSize.width < 1280) {
+      textInputFieldWidth = isExpanded ? 410 : 410 + 200;
+    }
+
+    if (screenSize.width < 768) {
+      Future.microtask(() {
+        ref.read(mainSideBarProvider.notifier).state = false;
+      });
+      textInputFieldWidth = 200 * scaleWidth(context, screenSize.width);
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        print('========== constraints ==========');
-        print(constraints.maxWidth);
-        print(constraints.maxHeight);
-
         return Container(
           width: constraints.maxWidth,
           height: constraints.maxHeight,
@@ -101,182 +71,286 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             scrollDirection: Axis.horizontal,
             slivers: [
               SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (1280 <= screenSize.width) ...[
-                      Container(
-                        width: constraints.maxWidth - 70,
-                        height: 80,
-                        decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '속기 연습',
-                              style: AppStyles.body2XLB.copyWith(
-                                color: AppColors.dark,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (1280 <= screenSize.width) ...[
+                        _contentTitle(constraints),
+                        const HSpace(16),
+                        SizedBox(
+                          width: textInputFieldWidth,
+                          height: 26 + textInputFieldHeight,
+                          child: Column(
+                            children: [
+                              const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  LabelText('내용'),
+                                  HSpace(8),
+                                ],
                               ),
-                            ),
-                            const WSpace(80),
-                            const Icon(
-                              Icons.format_size_outlined,
-                              color: AppColors.greyPrimaryText,
-                            ),
-                            FocusDropdownButton<double>(
-                              width: 140,
-                              height: 38,
-                              initialValue: 12,
-                              items: const [12, 14, 16, 18, 20, 32, 48],
-                              toValue: (value) => '$value',
-                              onChanged: (value) {
-                                if (fontSize == value) {
-                                  return;
-                                }
-
-                                fontSize = value;
-                              },
-                            ),
-                            const Icon(
-                              Icons.timer_outlined,
-                              color: AppColors.greyPrimaryText,
-                            ),
-                            const WSpace(8),
-                            Consumer(
-                              builder: (context, ref, child) {
-                                // final timerCount = ref.watch(mainTimerProvider);
-                                final timerCount = _time;
-
-                                final h = timerCount ~/ 3600;
-
-                                final m = ((timerCount - h * 3600)) ~/ 60;
-
-                                final s = timerCount - (h * 3600) - (m * 60);
-
-                                final hourLeft = h.toString().length < 2
-                                    ? '0$h'
-                                    : h.toString();
-
-                                final minuteLeft = m.toString().length < 2
-                                    ? '0$m'
-                                    : m.toString();
-
-                                final secondsLeft = s.toString().length < 2
-                                    ? '0$s'
-                                    : s.toString();
-
-                                final result =
-                                    "$hourLeft:$minuteLeft:$secondsLeft";
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 3),
-                                  child: Text(
-                                    result,
-                                    style: AppStyles.bodyMR.copyWith(
-                                      color: timerCount <= 600
-                                          ? AppColors.wrong
-                                          : AppColors.greySecondaryText,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                );
-                              },
-                            )
-                          ],
-                        ),
-                      ),
-                      const HSpace(16),
-                      SizedBox(
-                        width: 1052,
-                        height: 176,
-                        child: Column(
-                          children: [
-                            const Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                LabelText('내용'),
-                                HSpace(8),
-                              ],
-                            ),
-                            const HSpace(8),
-                            SizedBox(
-                              height: 150,
-                              child: TextField(
-                                focusNode: focus,
-                                controller: textEditingController,
-                                style: AppStyles.bodyMB.copyWith(
-                                  color: focus.hasFocus
-                                      ? AppColors.primary100
-                                      : AppColors.greyPrimaryText,
-                                  fontSize: fontSize,
-                                ),
-                                cursorColor: AppColors.primary100,
-                                decoration: const InputDecoration(
-                                  filled: true,
-                                  fillColor: AppColors.white,
-                                  contentPadding: EdgeInsets.all(12),
-                                  counterText: '',
-                                  hintText: '내용을 입력해주세요.',
-                                ),
-                                onChanged: (value) {
-                                  // Future.microtask(() {
-                                  //   if (value.isEmpty) {
-                                  //     _resetTimer();
-                                  //   } else {
-                                  //     if (!_isRunning) {
-                                  //       _startTimer();
-                                  //     }
-                                  //   }
-                                  // });
-
-                                  // Future.microtask(() {
-                                  //   if (value.isEmpty) {
-                                  //     ref
-                                  //         .read(mainTimerProvider.notifier)
-                                  //         .resetTimer();
-                                  //   } else {
-                                  //     ref
-                                  //         .read(mainTimerProvider.notifier)
-                                  //         .startTimer();
-                                  //   }
-                                  // });
-                                },
-                                textAlign: TextAlign.start,
+                              const HSpace(8),
+                              _textInputField(),
+                            ],
+                          ),
+                        )
+                      ] else if (768 <= screenSize.width) ...[
+                        _contentTitle(constraints),
+                        const HSpace(16),
+                        SizedBox(
+                          width: textInputFieldWidth,
+                          height: 26 + textInputFieldHeight,
+                          child: Column(
+                            children: [
+                              const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  LabelText('내용'),
+                                  HSpace(8),
+                                ],
                               ),
-                            )
-                          ],
+                              const HSpace(8),
+                              _textInputField(),
+                            ],
+                          ),
+                        )
+                      ] else ...[
+                        Container(
+                          width: constraints.maxWidth,
+                          margin: const EdgeInsets.only(top: 16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '속기 연습',
+                                style: AppStyles.body2XLB.copyWith(
+                                  color: AppColors.dark,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      )
-                    ] else if (768 <= screenSize.width) ...[
-                      SizedBox(
-                        width: constraints.maxWidth,
-                        height: 80,
-                        child: Row(
-                          children: [
-                            Text('타이머 태블릿'),
-                          ],
+                        const HSpace(16),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 3),
+                          child: Icon(
+                            Icons.format_size_outlined,
+                            color: AppColors.greyPrimaryText,
+                          ),
                         ),
-                      ),
-                    ] else ...[
-                      SizedBox(
-                        width: constraints.maxWidth,
-                        height: 80,
-                        child: Row(
-                          children: [
-                            Text('타이머 모바일'),
-                          ],
+                        const HSpace(8),
+                        FocusDropdownButton<double>(
+                          width: 100,
+                          height: 30,
+                          initialValue: 12,
+                          items: const [12, 14, 16, 18, 20, 32, 48],
+                          toValue: (value) => '$value',
+                          onChanged: (value) {
+                            if (fontSize == value) {
+                              return;
+                            }
+                            setState(() => fontSize = value);
+                          },
                         ),
-                      ),
-                    ]
-                  ],
+                        const HSpace(16),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 3),
+                          child: Icon(
+                            Icons.timer_outlined,
+                            color: AppColors.greyPrimaryText,
+                          ),
+                        ),
+                        const HSpace(8),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final timerCount = ref.watch(mainTimerProvider);
+
+                            final h = timerCount ~/ 3600;
+
+                            final m = ((timerCount - h * 3600)) ~/ 60;
+
+                            final s = timerCount - (h * 3600) - (m * 60);
+
+                            final hourLeft =
+                                h.toString().length < 2 ? '0$h' : h.toString();
+
+                            final minuteLeft =
+                                m.toString().length < 2 ? '0$m' : m.toString();
+
+                            final secondsLeft =
+                                s.toString().length < 2 ? '0$s' : s.toString();
+
+                            final result = "$hourLeft:$minuteLeft:$secondsLeft";
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Text(
+                                result,
+                                style: AppStyles.bodyMR.copyWith(
+                                  color: timerCount <= 600
+                                      ? AppColors.wrong
+                                      : AppColors.greySecondaryText,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          },
+                        ),
+                        const HSpace(16),
+                        SizedBox(
+                          width: textInputFieldWidth,
+                          height: 26 + textInputFieldHeight,
+                          child: Column(
+                            children: [
+                              const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  LabelText('내용'),
+                                  HSpace(8),
+                                ],
+                              ),
+                              const HSpace(8),
+                              _textInputField(),
+                            ],
+                          ),
+                        )
+                      ]
+                    ],
+                  ),
                 ),
               )
             ],
           ),
         );
       },
+    );
+  }
+
+  SizedBox _textInputField() {
+    return SizedBox(
+      height: textInputFieldHeight,
+      child: TextField(
+        focusNode: focus,
+        maxLines: null,
+        expands: true,
+        textAlign: TextAlign.start,
+        textAlignVertical: TextAlignVertical.top,
+        controller: textEditingController,
+        style: AppStyles.bodyMB.copyWith(
+          color:
+              focus.hasFocus ? AppColors.primary100 : AppColors.greyPrimaryText,
+          fontSize: fontSize,
+        ),
+        cursorColor: AppColors.primary100,
+        decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.white,
+            contentPadding: const EdgeInsets.all(12),
+            counterText: '',
+            hintText: '내용을 입력해주세요.',
+            hintStyle: AppStyles.bodyMR.copyWith(
+              color: AppColors.greySecondaryText,
+              fontSize: fontSize,
+            )),
+        onChanged: (value) {
+          Future.microtask(() {
+            if (value.isEmpty) {
+              ref.read(mainTimerProvider.notifier).resetTimer();
+            } else {
+              ref.read(mainTimerProvider.notifier).startTimer();
+            }
+          });
+        },
+      ),
+    );
+  }
+
+  Container _contentTitle(BoxConstraints constraints) {
+    return Container(
+      width: constraints.maxWidth - 70,
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(8)),
+      ),
+      margin: const EdgeInsets.only(top: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            '속기 연습',
+            style: AppStyles.body2XLB.copyWith(
+              color: AppColors.dark,
+            ),
+          ),
+          const WSpace(80),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 3),
+            child: Icon(
+              Icons.format_size_outlined,
+              color: AppColors.greyPrimaryText,
+            ),
+          ),
+          const WSpace(8),
+          FocusDropdownButton<double>(
+            width: 100,
+            height: 30,
+            initialValue: 12,
+            items: const [12, 14, 16, 18, 20, 32, 48],
+            toValue: (value) => '$value',
+            onChanged: (value) {
+              if (fontSize == value) {
+                return;
+              }
+              setState(() => fontSize = value);
+            },
+          ),
+          const WSpace(16),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 3),
+            child: Icon(
+              Icons.timer_outlined,
+              color: AppColors.greyPrimaryText,
+            ),
+          ),
+          const WSpace(8),
+          Consumer(
+            builder: (context, ref, child) {
+              final timerCount = ref.watch(mainTimerProvider);
+
+              final h = timerCount ~/ 3600;
+
+              final m = ((timerCount - h * 3600)) ~/ 60;
+
+              final s = timerCount - (h * 3600) - (m * 60);
+
+              final hourLeft = h.toString().length < 2 ? '0$h' : h.toString();
+
+              final minuteLeft = m.toString().length < 2 ? '0$m' : m.toString();
+
+              final secondsLeft =
+                  s.toString().length < 2 ? '0$s' : s.toString();
+
+              final result = "$hourLeft:$minuteLeft:$secondsLeft";
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Text(
+                  result,
+                  style: AppStyles.bodyMR.copyWith(
+                    color: timerCount <= 600
+                        ? AppColors.wrong
+                        : AppColors.greySecondaryText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            },
+          )
+        ],
+      ),
     );
   }
 }

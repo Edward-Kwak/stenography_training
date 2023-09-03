@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:stenography_training/config/app_config.dart';
 import 'package:stenography_training/features/common/presentation/error_page.dart';
 import 'package:stenography_training/features/main/presentation/main_page.dart';
 import 'package:stenography_training/features/main/presentation/screen/main_screen.dart';

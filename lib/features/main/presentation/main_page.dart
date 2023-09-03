@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:stenography_training/config/app_config.dart';
 import 'package:stenography_training/const/app_const.dart';
 import 'package:stenography_training/features/main/presentation/controller/main_screen_size_controller.dart';
 import 'package:stenography_training/features/main/presentation/controller/main_side_bar_controller.dart';
@@ -83,7 +82,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                     Center(
                       child: MainSideBarButton(
                         menuRoute: AppRouterState.main,
-                        subRoutes: [],
+                        subRoutes: const [],
                         onIcon: const Icon(
                           Icons.text_snippet_outlined,
                           color: AppColors.primary100,

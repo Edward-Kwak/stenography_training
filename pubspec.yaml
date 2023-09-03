@@ -48,10 +48,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icon/
-    - assets/icon/s/
-    - assets/icon/l/
-    - assets/icon/m/
+#    - assets/icon/
+#    - assets/icon/s/
+#    - assets/icon/l/
+#    - assets/icon/m/
     - assets/image/
 
   fonts:

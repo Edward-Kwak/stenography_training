@@ -23,3 +23,9 @@ Size getWidgetSize(GlobalKey key) {
 
   return renderBox.size;
 }
+
+double scaleWidth(BuildContext context, double deviceWidth) {
+  const designGuideWidth = 360;
+  final diff = deviceWidth / designGuideWidth;
+  return diff;
+}
