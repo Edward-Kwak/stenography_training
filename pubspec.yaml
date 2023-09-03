@@ -1,0 +1,64 @@
+name: stenography_training
+description: stenography training project
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.6 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  go_router: ^5.2.2
+  logger: ^1.1.0
+  flutter_riverpod: ^2.1.1
+  intl: ^0.18.0
+  http: ^0.13.5
+  collection: ^1.17.1
+  http_parser: ^4.0.2
+  package_info_plus: ^3.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+  flutter_native_splash: ^2.2.16
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+#  fonts:
+#    - family: SpoqaHanSansNeo
+#      fonts:
+#        - asset: assets/fonts/SpoqaHanSansNeo-Bold.otf
+#          weight: 700
+#        - asset: assets/fonts/SpoqaHanSansNeo-Medium.otf
+#          weight: 500
+#        - asset: assets/fonts/SpoqaHanSansNeo-Regular.otf
+#          weight: 400
+#        - asset: assets/fonts/SpoqaHanSansNeo-Light.otf
+#          weight: 300
+#        - asset: assets/fonts/SpoqaHanSansNeo-Thin.otf
+#          weight: 100
+
+flutter_native_splash:
+  color: "#ffffff"
+  color_dark: "#ffffff"
+  image: assets/splash.png
+  image_dark: assets/splash.png
+  android: false
+  ios: false
+  web: true
