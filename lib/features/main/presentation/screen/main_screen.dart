@@ -50,11 +50,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final screenSize = ref.watch(mainScreenSizeProvider);
     final isExpanded = ref.watch(mainSideBarProvider);
 
-    if (screenSize.width < 1280) {
+    if (1280 <= screenSize.width) {
+      textInputFieldWidth = 800;
+      textInputFieldHeight = 600;
+    } else if (768 <= screenSize.width) {
       textInputFieldWidth = isExpanded ? 410 : 410 + 200;
-    }
-
-    if (screenSize.width < 768) {
+    } else {
       Future.microtask(() {
         ref.read(mainSideBarProvider.notifier).state = false;
       });
